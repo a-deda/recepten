@@ -1,0 +1,285 @@
+/* Schermen in de lichte modus: overzicht, triage, detail, formulier.
+   Kookmodus heeft een eigen bestand — daar gelden andere regels. */
+
+.scherm {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: var(--ruimte-4) var(--ruimte-4) var(--ruimte-7);
+}
+
+.scherm__kop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruimte-3);
+  margin-bottom: var(--ruimte-4);
+  min-height: var(--raakdoel);
+}
+
+.scherm__titel { font-size: var(--tekst-l); }
+
+.terug {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--raakdoel);
+  padding-right: var(--ruimte-3);
+  color: var(--tekst-gedempt);
+  text-decoration: none;
+  font-size: var(--tekst-s);
+}
+
+.laden,
+.leeg {
+  color: var(--tekst-gedempt);
+  padding: var(--ruimte-5) var(--ruimte-4);
+  text-align: center;
+}
+
+.fout {
+  color: var(--kleur-fout);
+  font-size: var(--tekst-s);
+}
+
+/* --- Knoppen -------------------------------------------------------------- */
+/* Minimaal 48px hoog, ook de "kleine" variant (§8 regel 1). */
+.knop {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--raakdoel);
+  min-width: var(--raakdoel);
+  padding: 0 var(--ruimte-4);
+  border: 1px solid var(--kleur-lijn);
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--tekst);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--duur-snel) ease;
+}
+
+.knop:active { background: var(--kleur-vlak); }
+
+/* Accent is gereserveerd voor voortgang, timers en de primaire actie (§13).
+   Tekst op accent is altijd donker: accent haalt op licht geen 4.5:1. */
+.knop--primair {
+  background: var(--kleur-accent);
+  border-color: var(--kleur-accent);
+  color: var(--kleur-op-accent);
+}
+
+.knop--groot {
+  width: 100%;
+  min-height: 56px;
+  font-size: var(--tekst-l);
+  margin: var(--ruimte-4) 0;
+}
+
+.knop--klein { font-size: var(--tekst-s); padding: 0 var(--ruimte-3); }
+
+.knop--stil { color: var(--tekst-gedempt); border-color: transparent; }
+
+.knop:disabled { opacity: 0.55; cursor: default; }
+
+/* --- Teller "3 nieuw" ----------------------------------------------------- */
+.teller {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-2);
+  min-height: var(--raakdoel);
+  margin-bottom: var(--ruimte-4);
+  padding: 0 var(--ruimte-4);
+  border-radius: var(--radius-m);
+  background: var(--kleur-accent);
+  color: var(--kleur-op-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.teller__getal { font-size: var(--tekst-l); }
+
+/* --- Zoeken --------------------------------------------------------------- */
+.zoek { margin-bottom: var(--ruimte-4); }
+
+.zoek input {
+  width: 100%;
+  min-height: var(--raakdoel);
+  padding: 0 var(--ruimte-4);
+  border: 1px solid var(--kleur-lijn);
+  border-radius: var(--radius-m);
+  background: var(--kleur-vlak);
+  /* 16px of groter, anders zoomt iOS bij focus in. */
+  font-size: var(--tekst-m);
+}
+
+/* --- Lijst ---------------------------------------------------------------- */
+.lijst { display: flex; flex-direction: column; }
+
+.kaart + .kaart { border-top: 1px solid var(--kleur-lijn); }
+
+.kaart__link {
+  display: flex;
+  align-items: center;
+  gap: var(--ruimte-3);
+  min-height: 64px;
+  padding: var(--ruimte-3) var(--ruimte-1);
+  text-decoration: none;
+}
+
+.kaart__icoon { font-size: var(--tekst-l); line-height: 1; }
+.kaart__tekst { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kaart__titel { font-size: var(--tekst-m); }
+
+.kaart__meta {
+  display: flex;
+  gap: var(--ruimte-3);
+  color: var(--tekst-gedempt);
+  font-size: var(--tekst-xs);
+}
+
+.kaart__gekookt { color: var(--tekst-gedempt); }
+
+/* --- Triage --------------------------------------------------------------- */
+.lijst--triage { gap: var(--ruimte-5); }
+
+.triage {
+  padding-bottom: var(--ruimte-4);
+  border-bottom: 1px solid var(--kleur-lijn);
+}
+
+.triage__titel {
+  display: block;
+  font-size: var(--tekst-l);
+  text-decoration: none;
+  margin-bottom: var(--ruimte-1);
+}
+
+.triage__meta {
+  color: var(--tekst-gedempt);
+  font-size: var(--tekst-xs);
+  margin-bottom: var(--ruimte-3);
+}
+
+.triage__acties { display: flex; gap: var(--ruimte-2); }
+.triage__acties .knop { flex: 1; }
+
+/* --- Detail --------------------------------------------------------------- */
+.detail__foto {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-l);
+  margin-bottom: var(--ruimte-4);
+}
+
+.detail__titel { font-size: var(--tekst-xl); margin-bottom: var(--ruimte-2); }
+.detail__samenvatting { color: var(--tekst-gedempt); margin-bottom: var(--ruimte-3); }
+
+.detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ruimte-4);
+  color: var(--tekst-gedempt);
+  font-size: var(--tekst-s);
+}
+
+.detail__geen-stappen {
+  margin: var(--ruimte-4) 0;
+  padding: var(--ruimte-3);
+  border-radius: var(--radius-m);
+  background: var(--kleur-vlak);
+  color: var(--tekst-gedempt);
+  font-size: var(--tekst-s);
+}
+
+.detail__blok { margin-top: var(--ruimte-6); }
+
+.detail__blok h2 {
+  font-size: var(--tekst-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--tekst-gedempt);
+  margin-bottom: var(--ruimte-3);
+}
+
+.ingredienten li,
+.stappen li {
+  display: flex;
+  gap: var(--ruimte-3);
+  padding: var(--ruimte-2) 0;
+  border-bottom: 1px solid var(--kleur-lijn);
+}
+
+/* Vaste kolombreedte: hoeveelheden lijnen dan uit onder elkaar. */
+.ingredienten__hoeveelheid {
+  flex: 0 0 5.5rem;
+  text-align: right;
+  color: var(--tekst-gedempt);
+}
+
+.ingredienten__notitie { color: var(--tekst-gedempt); }
+
+.stappen__nummer { flex: 0 0 1.75rem; color: var(--kleur-accent); font-weight: 700; }
+.stappen__tijd { color: var(--tekst-gedempt); }
+
+.detail__parse-notitie,
+.detail__notities {
+  white-space: pre-wrap;
+  color: var(--tekst-gedempt);
+  font-size: var(--tekst-s);
+}
+
+/* --- Formulier ------------------------------------------------------------ */
+.formulier { display: flex; flex-direction: column; gap: var(--ruimte-1); }
+
+.formulier label {
+  margin-top: var(--ruimte-4);
+  font-size: var(--tekst-s);
+  font-weight: 600;
+}
+
+.hint { font-weight: 400; color: var(--tekst-gedempt); }
+
+.formulier input,
+.formulier textarea {
+  width: 100%;
+  min-height: var(--raakdoel);
+  padding: var(--ruimte-3);
+  border: 1px solid var(--kleur-lijn);
+  border-radius: var(--radius-m);
+  background: var(--kleur-vlak);
+  font-size: var(--tekst-m);
+  resize: vertical;
+}
+
+.formulier__rij { display: flex; gap: var(--ruimte-3); }
+.formulier__rij > div { flex: 1; }
+
+/* --- Login ---------------------------------------------------------------- */
+.login {
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: var(--ruimte-7) var(--ruimte-4);
+}
+
+.login__titel { font-size: var(--tekst-xxl); margin-bottom: var(--ruimte-5); }
+.login__form { display: flex; flex-direction: column; gap: var(--ruimte-2); }
+.login__melding { color: var(--tekst-gedempt); }
+
+.login__form input {
+  min-height: var(--raakdoel);
+  padding: 0 var(--ruimte-3);
+  border: 1px solid var(--kleur-lijn);
+  border-radius: var(--radius-m);
+  background: var(--kleur-vlak);
+  font-size: var(--tekst-m);
+}
+
+/* Alles blijft leesbaar vanaf 360px; niets scrollt horizontaal. */
+@media (max-width: 380px) {
+  .triage__acties { flex-wrap: wrap; }
+  .ingredienten__hoeveelheid { flex-basis: 4.5rem; }
+}
+
+.scherm__acties { display: flex; gap: var(--ruimte-2); }

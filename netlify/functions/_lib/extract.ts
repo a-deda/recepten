@@ -98,7 +98,10 @@ export function htmlNaarTekst(html: string): string {
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/[ \t ]+/g, ' ')
-    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    // Spaties rond een regeleinde zijn resten van weggehaalde tags: ze kosten
+    // tokens en maken de invoer voor Claude rommeliger dan nodig.
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 

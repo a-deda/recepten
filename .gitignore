@@ -1,8 +1,9 @@
-node_modules
-dist
-.netlify
+
+*.tsbuildinfo
 .env
 .env.local
-*.tsbuildinfo
-test-results
+.netlify
+dist
+node_modules
 playwright-report
+test-results
