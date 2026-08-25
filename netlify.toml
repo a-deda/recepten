@@ -1,0 +1,19 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Paden:
+#   /api/intake                            -> netlify/functions/intake.ts (config.path)
+#   /.netlify/functions/worker-background   -> de queue-verwerker (background function,
+#                                              15 minuten runtime, antwoordt direct 202)
+# Beide URL's staan als Script Property in Apps Script.
+
+# SPA-fallback: alles wat geen bestand of function is, gaat naar index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

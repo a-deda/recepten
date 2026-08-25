@@ -1,0 +1,166 @@
+/* ---------------------------------------------------------------------------
+   Receptenbak — designtokens (PRD §13)
+   Dit bestand komt vóór elk component. Componenten gebruiken uitsluitend
+   variabelen uit dit bestand; geen losse hex-waarden in componentcode.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* --- Palet ------------------------------------------------------------- */
+  /* Geen neutraal zwart: warme, donkere basis leest 's avonds prettiger en
+     vloekt niet met eten op foto's. */
+  --kleur-donker: #16120e;        /* basis kookmodus — warm, bijna gietijzer */
+  --kleur-op-donker: #f3ece0;
+  --kleur-licht: #fbf8f3;         /* basis overzicht */
+  --kleur-op-licht: #1e1913;
+  --kleur-accent: #e0a32e;        /* saffraan/eigeel */
+  --kleur-gedempt: #8a7f6e;
+
+  /* Contrastregel uit §13: het accent haalt 4.5:1 op donker, maar NIET op
+     licht. Tekst óp een accentvlak is daarom altijd donker. Gebruik
+     --kleur-op-accent en nooit wit op accent. */
+  --kleur-op-accent: #1e1913;
+
+  /* Afgeleiden, alleen grijs-/warmtinten. Alles wat geen voortgang, timer of
+     primaire actie is, blijft grijstint (§13). */
+  --kleur-lijn: color-mix(in srgb, var(--kleur-gedempt) 32%, transparent);
+  --kleur-vlak: color-mix(in srgb, var(--kleur-gedempt) 12%, transparent);
+  --kleur-vlak-donker: #211b15;
+  --kleur-fout: #a33b2a;
+
+  /* Actieve rollen; kookmodus zet deze om in .kookmodus. */
+  --achtergrond: var(--kleur-licht);
+  --tekst: var(--kleur-op-licht);
+  --tekst-gedempt: var(--kleur-gedempt);
+
+  /* --- Typografie -------------------------------------------------------- */
+  /* Drie rollen, elk met een reden (§13). Display met terughoudendheid:
+     alleen recepttitels. Cijfers altijd mono — dan lijnen hoeveelheden en
+     tijden uit en scan je "180 °C / 25 min" in één oogopslag. */
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
+  --font-ui: 'Instrument Sans Variable', 'Instrument Sans', system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace,
+    'SF Mono', Menlo, monospace;
+
+  --tekst-xs: 0.8125rem;   /* 13px — labels */
+  --tekst-s: 0.9375rem;    /* 15px */
+  --tekst-m: 1.0625rem;    /* 17px — body, leesbaar op leesafstand */
+  --tekst-l: 1.375rem;     /* 22px */
+  --tekst-xl: 1.75rem;     /* 28px — ondergrens kookmodus-instructie (§8) */
+  --tekst-xxl: 2.125rem;   /* 34px — startgrootte kookmodus-instructie */
+
+  --regelhoogte-krap: 1.2;
+  --regelhoogte: 1.5;
+  --regelhoogte-ruim: 1.45;  /* kookmodus: ruim bij grote tekst */
+
+  /* --- Ruimte ------------------------------------------------------------ */
+  --ruimte-1: 0.25rem;
+  --ruimte-2: 0.5rem;
+  --ruimte-3: 0.75rem;
+  --ruimte-4: 1rem;
+  --ruimte-5: 1.5rem;
+  --ruimte-6: 2rem;
+  --ruimte-7: 3rem;
+
+  --radius-s: 6px;
+  --radius-m: 12px;
+  --radius-l: 20px;
+
+  /* --- Aanraken ---------------------------------------------------------- */
+  /* Minimaal 48px, ook voor iets dat er kleiner uitziet (§8 regel 1). */
+  --raakdoel: 48px;
+
+  --duur-snel: 120ms;
+  --duur: 220ms;
+  --duur-traag: 400ms;
+}
+
+/* Kookmodus wisselt de rollen om: volledig donker, geen witte vlakken (§8). */
+.kookmodus {
+  --achtergrond: var(--kleur-donker);
+  --tekst: var(--kleur-op-donker);
+  --tekst-gedempt: var(--kleur-gedempt);
+  --kleur-vlak: var(--kleur-vlak-donker);
+  --kleur-lijn: color-mix(in srgb, var(--kleur-op-donker) 18%, transparent);
+}
+
+/* --- Reset (klein gehouden) ------------------------------------------------ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--achtergrond);
+  color: var(--tekst);
+  font-family: var(--font-ui);
+  font-size: var(--tekst-m);
+  line-height: var(--regelhoogte);
+  /* Kleurwissel bij openen kookmodus mag niet flitsen. */
+  transition: background-color var(--duur) ease;
+}
+
+h1, h2, h3, p, figure { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  /* Dubbeltik-zoom op iOS kost een tik in kookmodus. */
+  touch-action: manipulation;
+}
+
+img { max-width: 100%; display: block; }
+
+a { color: inherit; }
+
+/* Zichtbare toetsenbordfocus, overal (§13 kwaliteitsvloer). */
+:focus-visible {
+  outline: 3px solid var(--kleur-accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-s);
+}
+
+/* Cijfers zijn mono en lijnen uit — hoeveelheden, tijden, stapnummers. */
+.cijfer {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: var(--regelhoogte-krap);
+}
+
+.visueel-verborgen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

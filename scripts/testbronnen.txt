@@ -1,0 +1,16 @@
+# Tien echte bronnen om de parser op te meten (PRD §11: ken je faalpercentage
+# vóór je op de funnel vertrouwt). Vervang deze door de blogs die JIJ gebruikt —
+# een faalpercentage op andermans bronnen zegt niets.
+#
+# Regels die met # beginnen worden overgeslagen.
+
+https://www.ah.nl/allerhande/recept/R-R1193785/pasta-alla-norma
+https://www.leukerecepten.nl/recepten/pasta-pesto/
+https://www.24kitchen.nl/recepten/spaghetti-carbonara
+https://uitpaulineskeuken.nl/49340/boeuf-bourguignon.html
+https://www.francescakookt.nl/pompoensoep/
+https://rutgerbakt.nl/taart-recepten/appeltaart-recept/
+https://ohmyfoodness.nl/recept/shakshuka/
+https://dagelijksekost.vrt.be/gerechten/stoofvlees-met-frieten
+https://www.jumbo.com/recepten/kip-tikka-masala
+https://www.smulweb.nl/recepten/1234567/Erwtensoep
