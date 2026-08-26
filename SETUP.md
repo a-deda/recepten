@@ -17,14 +17,30 @@ heeft.
    *Enable email provider* aan. Magic link werkt dan zonder wachtwoord.
 4. **Authentication → Users → Add user**: je eigen e-mailadres. Noteer de
    `uuid` van die gebruiker — dat is straks `OWNER_ID`.
-5. **Project Settings → API**: noteer
-   - `Project URL` → `SUPABASE_URL` en `VITE_SUPABASE_URL`
-   - `anon public` → `VITE_SUPABASE_ANON_KEY`
-   - `service_role` → `SUPABASE_SERVICE_ROLE_KEY`
+5. **Project Settings → Data API / API Keys**: noteer
+   - `Project URL` → `SUPABASE_URL` en `VITE_SUPABASE_URL`.
+     Zie je alleen een project-ID? De URL is `https://<project-id>.supabase.co`.
+   - de **publishable** key (`sb_publishable_…`) → `VITE_SUPABASE_ANON_KEY`
+   - de **secret** key (`sb_secret_…`) → `SUPABASE_SERVICE_ROLE_KEY`
 
-> De service-role key omzeilt RLS. Hij hoort in Netlify-omgevingsvariabelen en
-> in Apps Script Script Properties, nergens anders. Niet in `.env` die je deelt,
+> Supabase noemde deze sleutels vroeger `anon` en `service_role`; de
+> variabelenamen in dit project dragen die oude namen nog. Krijg je beide sets
+> aangeboden, kies dan de nieuwe (`sb_…`) en meng ze niet met de legacy JWT's.
+
+> De secret key omzeilt RLS. Hij hoort in Netlify-omgevingsvariabelen en in
+> Apps Script Script Properties, nergens anders. Niet in `.env` die je deelt,
 > niet in de frontend, niet in git.
+
+Controleer URL en sleutel voordat je ze overal invult:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  "https://JOUW-PROJECT-ID.supabase.co/rest/v1/recipes?select=id&limit=1" \
+  -H "apikey: JOUW_SLEUTEL"
+```
+
+`200` is goed. `401` = sleutel fout, `404` = migratie 0001 niet gedraaid, geen
+verbinding = project-ID fout.
 
 ## 2. Anthropic-sleutel
 
@@ -49,12 +65,12 @@ Dat is `INTAKE_SECRET`. Apps Script en de intake-endpoint delen hem.
    | Naam | Waarde |
    |---|---|
    | `SUPABASE_URL` | uit stap 1 |
-   | `SUPABASE_SERVICE_ROLE_KEY` | uit stap 1 |
+   | `SUPABASE_SERVICE_ROLE_KEY` | de secret key uit stap 1 |
    | `ANTHROPIC_API_KEY` | uit stap 2 |
    | `INTAKE_SECRET` | uit stap 3 |
    | `OWNER_ID` | de user-uuid uit stap 1 |
    | `VITE_SUPABASE_URL` | zelfde als `SUPABASE_URL` |
-   | `VITE_SUPABASE_ANON_KEY` | uit stap 1 |
+   | `VITE_SUPABASE_ANON_KEY` | de publishable key uit stap 1 |
 
 3. Deploy. Noteer de site-URL.
 4. Zet die URL ook in Supabase onder **Authentication → URL Configuration →
@@ -95,7 +111,7 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
    | Naam | Waarde |
    |---|---|
    | `SUPABASE_URL` | uit stap 1 |
-   | `SUPABASE_SERVICE_KEY` | de service-role key uit stap 1 |
+   | `SUPABASE_SERVICE_KEY` | de **secret** key uit stap 1 (zelfde waarde als `SUPABASE_SERVICE_ROLE_KEY` in Netlify) |
    | `INTAKE_URL` | `https://<jouw-site>/api/intake` |
    | `WORKER_URL` | `https://<jouw-site>/.netlify/functions/worker-background` |
    | `INTAKE_SECRET` | uit stap 3 |

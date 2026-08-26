@@ -158,6 +158,11 @@ function uploadBijlagen_(bericht, messageId) {
         method: 'post',
         contentType: mime,
         headers: {
+          // Beide headers, net als elke andere aanroep hier en net als de
+          // officiële client doet. De nieuwe sleutels (sb_secret_…) worden op
+          // de `apikey`-header herkend; alleen een Bearer meesturen werkte
+          // met de oude JWT-sleutels en is nu een stille faalkans.
+          apikey: eig_('SUPABASE_SERVICE_KEY'),
           Authorization: 'Bearer ' + eig_('SUPABASE_SERVICE_KEY'),
           'x-upsert': 'true'
         },
