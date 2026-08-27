@@ -106,6 +106,10 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
 2. Plak `appsscript/Code.gs` en `appsscript/Backup.gs` als twee bestanden.
 3. **Projectinstellingen** → "Manifestbestand appsscript.json weergeven" aan →
    plak de inhoud van `appsscript/appsscript.json`.
+
+   Dat bestand somt vier rechten op: Gmail lezen en labelen, Drive voor de
+   backup, uitgaande netwerkverzoeken, en triggers beheren. Pas je het later
+   aan, dan vraagt Google opnieuw om toestemming.
 4. **Projectinstellingen → Scripteigenschappen**, zet:
 
    | Naam | Waarde |
@@ -133,7 +137,13 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
    Dit maakt de labels `Receptenbak/nieuw` en `Receptenbak/verwerkt` en zet
    twee triggers klaar: elke minuut pollen, zondagnacht backuppen. Controleer daarna onder **Triggers**
    (het klok-icoon) dat er inderdaad twee staan.
-6. **Gmail → Instellingen → Filters** → nieuw filter: *Aan* bevat je
+6. Draai **`backupNaarDrive`** één keer met de hand. Dit is de enige manier om
+   te weten dat de wekelijkse backup werkt: draait hij pas over zes dagen
+   vanzelf en faalt hij dan, dan merk je dat niet. In je Drive hoort daarna een
+   map `Receptenbak backups` te staan met één JSON-bestand. Bij een lege
+   database is `[]` het juiste antwoord.
+
+7. **Gmail → Instellingen → Filters** → nieuw filter: *Aan* bevat je
    receptenadres → *Label toepassen: Receptenbak/nieuw*. Zonder dit label doet
    de poller niets.
 
