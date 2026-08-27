@@ -117,9 +117,22 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
    | `INTAKE_SECRET` | uit stap 3 |
    | `OWNER_ID` | de user-uuid uit stap 1 |
 
-5. Draai één keer met de hand de functie **`installeer`**. Geef toestemming als
-   het scherm daarom vraagt. Dit maakt de labels `inbox` en `verwerkt` en zet
-   twee triggers klaar: elke minuut pollen, zondagnacht backuppen.
+5. Ga terug naar de **Editor** (het `< >`-icoon in de linker zijbalk) — de
+   uitvoerbalk bestaat niet in Projectinstellingen. Klik op **`Code.gs`**, sla
+   op met Ctrl/Cmd + S, kies in de dropdown boven de code de functie
+   **`installeer`** en klik **Uitvoeren**.
+
+   De dropdown toont alleen functies uit het geopende bestand, dus `Code.gs`
+   moet open staan. Je ziet daar twee namen, `pollen` en `installeer`; de rest
+   eindigt op een underscore en verbergt Apps Script bewust.
+
+   Geef toestemming als het scherm daarom vraagt — je krijgt een "Deze app is
+   niet geverifieerd"-waarschuwing, en via *Geavanceerd → Ga naar project* kom
+   je verder. Het is je eigen script.
+
+   Dit maakt de labels `inbox` en `verwerkt` en zet twee triggers klaar: elke
+   minuut pollen, zondagnacht backuppen. Controleer daarna onder **Triggers**
+   (het klok-icoon) dat er inderdaad twee staan.
 6. **Gmail → Instellingen → Filters** → nieuw filter: *Aan* bevat je
    receptenadres → *Label toepassen: inbox*. Zonder dit label doet de poller
    niets.
