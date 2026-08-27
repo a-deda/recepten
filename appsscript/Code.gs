@@ -85,6 +85,17 @@ function pollen() {
     fouten.push('mail: ' + e.message);
   }
 
+  // Eén keer per run, ná de mail: de worker pakt tot 25 rijen per aanroep, dus
+  // per bericht pokén is verspilling. Belangrijker: een mislukte poke hoort
+  // hier in `fouten` te belanden. Logde hij alleen naar de console, dan blijft
+  // je queue op `pending` staan zonder dat iets erover klaagt — precies de
+  // stille storing die dit project niet mag hebben (§11).
+  try {
+    pookWorker_();
+  } catch (e) {
+    fouten.push('worker: ' + e.message);
+  }
+
   try {
     roepNetlify_('/api/bridge', { actie: 'keep-alive' });
   } catch (e) {
@@ -154,8 +165,6 @@ function stuurInzending_(bericht) {
     body: bericht.getPlainBody() || '',
     attachments: bijlagen
   });
-
-  pookWorker_();
 }
 
 /**
@@ -225,14 +234,21 @@ function bestandsextensie_(naam, mime) {
  * daarna tot 15 minuten door. Deze aanroep blokkeert de trigger dus niet.
  */
 function pookWorker_() {
-  var res = UrlFetchApp.fetch(siteUrl_() + WORKER_PAD, {
+  var url = siteUrl_() + WORKER_PAD;
+  var res = UrlFetchApp.fetch(url, {
     method: 'post',
     headers: { 'x-intake-secret': eig_('INTAKE_SECRET') },
     payload: '',
     muteHttpExceptions: true
   });
-  if (res.getResponseCode() >= 400) {
-    console.error('worker gaf ' + res.getResponseCode() + ': ' + res.getContentText());
+
+  var code = res.getResponseCode();
+  if (code >= 400) {
+    var hint = code === 404
+      ? ' — een 404 betekent meestal dat background functions niet beschikbaar ' +
+        'zijn op je Netlify-plan. Zie SETUP.md stap 4 voor de synchrone variant.'
+      : '';
+    throw new Error(url + ' gaf ' + code + ': ' + res.getContentText() + hint);
   }
 }
 
@@ -369,6 +385,13 @@ function controleerInstellingen() {
   console.log('Roept aan: ' + siteUrl_() + '/api/bridge');
   var antwoord = roepNetlify_('/api/bridge', { actie: 'keep-alive' });
   console.log('Brug antwoordde: ' + JSON.stringify(antwoord));
+  try {
+    pookWorker_();
+    console.log('Worker: ok (' + siteUrl_() + WORKER_PAD + ')');
+  } catch (e) {
+    console.log('Worker: MISLUKT — ' + e.message);
+  }
+
   console.log('Labels: ' +
     (GmailApp.getUserLabelByName(LABEL) ? 'ok' : 'ONTBREEKT') + ' / ' +
     (GmailApp.getUserLabelByName(LABEL_KLAAR) ? 'ok' : 'ONTBREEKT'));
