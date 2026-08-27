@@ -27,6 +27,11 @@ export default async function worker(request: Request): Promise<Response> {
     return new Response('Onbevoegd', { status: 401 });
   }
 
+  // Eerste regel na de geheimcontrole: staat deze niet in de Netlify-logs, dan
+  // is de function bij het opstarten al omgevallen en zoek je in de verkeerde
+  // hoek.
+  console.log('worker: gestart');
+
   let verwerkt = 0;
   while (verwerkt < MAX_RIJEN_PER_RUN) {
     const rijen = await claim(BATCH);

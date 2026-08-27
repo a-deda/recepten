@@ -1,4 +1,3 @@
-import { PDFParse } from 'pdf-parse';
 import { db, BUCKET } from './supabase.js';
 import type { Inzending, ParserInvoer, BronType } from './types.js';
 
@@ -183,6 +182,12 @@ export async function extraheer(inzending: Inzending): Promise<ParserInvoer> {
       (a) => a.mime === 'application/pdf',
     )!;
     const bytes = await downloadUitStorage(bijlage.path);
+
+    // Bewust pas hier laden. pdf-parse trekt pdfjs met workerbestanden mee, en
+    // als dat in de bundel misgaat crasht de function bij het opstarten — dan
+    // verwerkt hij ook geen enkele URL of foto meer, terwijl de aanroep nog
+    // netjes 202 teruggeeft. Zo raakt een pdf-probleem alleen pdf's.
+    const { PDFParse } = await import('pdf-parse');
     const parser = new PDFParse({ data: bytes });
     try {
       const resultaat = await parser.getText();
