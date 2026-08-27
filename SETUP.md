@@ -202,11 +202,18 @@ gratis terugvaloptie.
 
 ## Als er iets stukgaat
 
+Zit je vast op een `401` of `404` vanuit Apps Script? Draai daar de functie
+**`controleerInstellingen`** (staat in `Backup.gs`). Die drukt per Script
+Property af hoe lang de waarde is, welke prefix hij heeft en of er witruimte
+of een regeleinde in geslopen is — zonder je sleutel te tonen — en doet daarna
+één testaanroep met het volledige antwoord van Supabase erbij.
+
 | Verschijnsel | Kijk hier |
 |---|---|
 | Geen bevestigingsmail | Apps Script → **Uitvoeringen**; de poller gooit een fout bij problemen |
 | Mail komt niet binnen | Staat het Gmail-filter goed? Heeft de mail het label `Receptenbak/nieuw`? |
 | `401` op de intake | `INTAKE_SECRET` verschilt tussen Netlify en Script Properties |
+| `401` van Supabase in Apps Script | Draai `controleerInstellingen`. Meestal een half gekopieerde sleutel, witruimte, of een sleutel uit een ánder project dan de URL |
 | Recept blijft `pending` | Wordt de worker gepookt? Zie de background-functions-check in stap 4 |
 | "Mislukt: pagina gaf status 403" | Cookiemuur of Cloudflare. Kopieer de tekst en mail die |
 | Instagram-link faalt | Verwacht: loginmuur. Kopieer de caption en mail die |

@@ -236,7 +236,9 @@ function houdSupabaseWakker_() {
     }
   );
   if (res.getResponseCode() >= 300) {
-    throw new Error('keep-alive gaf ' + res.getResponseCode());
+    throw new Error(
+      'keep-alive gaf ' + res.getResponseCode() + ': ' + res.getContentText()
+    );
   }
 }
 
@@ -267,7 +269,9 @@ function stuurBevestigingen_() {
   );
 
   if (res.getResponseCode() >= 300) {
-    throw new Error('queue lezen gaf ' + res.getResponseCode());
+    throw new Error(
+      'queue lezen gaf ' + res.getResponseCode() + ': ' + res.getContentText()
+    );
   }
 
   var rijen = JSON.parse(res.getContentText());
@@ -340,7 +344,9 @@ function markeerGemeld_(id) {
     }
   );
   if (res.getResponseCode() >= 300) {
-    throw new Error('notified_at zetten gaf ' + res.getResponseCode());
+    throw new Error(
+      'notified_at zetten gaf ' + res.getResponseCode() + ': ' + res.getContentText()
+    );
   }
 }
 
