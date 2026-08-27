@@ -3,6 +3,13 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[build.environment]
+  # Vastzetten, niet aan Netlify overlaten: vite 8 eist node ^20.19 || >=22.12
+  # en @netlify/functions 6 eist >=22.12. Op een oudere default faalt de build
+  # en staat er dus geen enkele function — wat zich uit als een 404 op
+  # /api/... in plaats van als een duidelijke bouwfout.
+  NODE_VERSION = "22"
+
 [functions]
   node_bundler = "esbuild"
 
