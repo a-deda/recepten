@@ -1,5 +1,5 @@
-import { timingSafeEqual } from 'node:crypto';
 import { db, vereist } from './_lib/supabase.js';
+import { geheimKlopt } from './_lib/auth.js';
 import { extraheer } from './_lib/extract.js';
 import { parseer } from './_lib/parser.js';
 import { inzendingSchema, type Recept } from './_lib/types.js';
@@ -142,11 +142,4 @@ function hernummer(steps: Recept['steps']): Recept['steps'] {
 function somMinuten(steps: Recept['steps']): number | null {
   const totaal = steps.reduce((som, stap) => som + (stap.minutes ?? 0), 0);
   return totaal > 0 ? totaal : null;
-}
-
-function geheimKlopt(meegestuurd: string | null): boolean {
-  if (!meegestuurd) return false;
-  const verwacht = Buffer.from(vereist('INTAKE_SECRET'));
-  const gekregen = Buffer.from(meegestuurd);
-  return verwacht.length === gekregen.length && timingSafeEqual(verwacht, gekregen);
 }

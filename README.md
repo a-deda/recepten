@@ -13,6 +13,7 @@ staat in de PRD; dit bestand beschrijft alleen wat er in de repo zit.
 | Onderdeel | Waar |
 |---|---|
 | Funnel (mail → Storage → queue → Claude → recept) | `appsscript/`, `netlify/functions/` |
+| Brug: alle databasetoegang voor Apps Script | `netlify/functions/bridge.ts` |
 | Parser (één prompt, één schema, alle bronnen) | `netlify/functions/_lib/parser.ts` |
 | Datamodel, RLS, RPC's | `supabase/migrations/` |
 | Overzicht, zoeken, triage, detail, bewerken | `src/pages/` |
@@ -63,6 +64,11 @@ zonder de reden te lezen die erbij staat:
   zonder de bron opnieuw te zoeken.
 - **Gefaalde inzendingen worden nooit opgeruimd.** Ze zijn het materiaal voor
   die herparse.
+- **In Apps Script staat geen Supabase-sleutel.** Supabase weigert secret keys
+  bij verzoeken die op een browser lijken, en de User-Agent van Apps Script
+  valt daaronder. Alles loopt via `/api/bridge`; bijlagen gaan met een signed
+  upload URL alsnog rechtstreeks naar Storage, zodat de 6 MB-grens op de
+  request body omzeild blijft.
 
 ## Wat er bewust niet in zit
 

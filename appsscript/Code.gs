@@ -7,13 +7,19 @@
  *
  * Eén trigger, elke minuut, vier taken per run:
  *   1. ongelezen mail met het label Receptenbak/nieuw ophalen
- *   2. bijlagen rechtstreeks naar Supabase Storage (niet door de function heen:
- *      Netlify accepteert ~6 MB en een iPhone-foto van 4 MB wordt base64 ruim 5)
- *   3. Supabase wakker houden met één goedkope select
+ *   2. bijlagen rechtstreeks naar Supabase Storage, via een signed upload URL
+ *      (niet door de function heen: Netlify accepteert ~6 MB en een
+ *      iPhone-foto van 4 MB wordt base64 ruim 5)
+ *   3. Supabase wakker houden
  *   4. bevestigingsmails terugsturen voor verwerkte rijen
  *
- * Installatie: zie SETUP.md. Alle waarden komen uit Script Properties, er staat
- * geen geheim in deze code.
+ * Er staat hier GEEN Supabase-sleutel. Supabase weigert secret keys bij
+ * verzoeken die op een browser lijken, en de User-Agent van UrlFetchApp valt
+ * daaronder — een header die je hier niet mag overschrijven. Alle
+ * databasetoegang loopt daarom via /api/bridge op Netlify, waar de sleutel
+ * hoort. Dit script kent alleen het gedeelde geheim.
+ *
+ * Installatie: zie SETUP.md.
  */
 
 // Genest onder één ouderlabel, zodat het in de Gmail-zijbalk bij elkaar staat.
@@ -25,15 +31,48 @@ var LABEL_KLAAR = 'Receptenbak/verwerkt';
 var MAX_THREADS_PER_RUN = 10;
 var MAX_BIJLAGE_BYTES = 20 * 1024 * 1024;
 
+// Draait de worker niet als background function op jouw Netlify-plan, dan is
+// dit het enige dat verandert: '/api/worker' met de synchrone variant.
+var WORKER_PAD = '/.netlify/functions/worker-background';
+
 function eig_(naam) {
   var waarde = PropertiesService.getScriptProperties().getProperty(naam);
   if (!waarde) {
     throw new Error('Script Property ' + naam + ' ontbreekt. Zie SETUP.md.');
   }
-  return waarde;
+  return waarde.trim();
 }
 
-/** De enige functie waar de trigger op staat. */
+function siteUrl_() {
+  return eig_('SITE_URL').replace(/\/+$/, '');
+}
+
+/**
+ * Elke aanroep naar Netlify loopt hierdoorheen: één plek voor het geheim, één
+ * plek waar een foutmelding het antwoord van de server meeneemt in plaats van
+ * alleen een statuscode.
+ */
+function roepNetlify_(pad, payload) {
+  var opties = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'x-intake-secret': eig_('INTAKE_SECRET') },
+    payload: JSON.stringify(payload || {}),
+    muteHttpExceptions: true
+  };
+
+  var res = UrlFetchApp.fetch(siteUrl_() + pad, opties);
+  var code = res.getResponseCode();
+
+  if (code >= 300) {
+    throw new Error(pad + ' gaf ' + code + ': ' + res.getContentText());
+  }
+
+  var tekst = res.getContentText();
+  return tekst ? JSON.parse(tekst) : {};
+}
+
+/** De enige functie waar de minuut-trigger op staat. */
 function pollen() {
   var fouten = [];
 
@@ -44,7 +83,7 @@ function pollen() {
   }
 
   try {
-    houdSupabaseWakker_();
+    roepNetlify_('/api/bridge', { actie: 'keep-alive' });
   } catch (e) {
     fouten.push('keep-alive: ' + e.message);
   }
@@ -68,7 +107,7 @@ function pollen() {
 function verwerkNieuweMail_() {
   var label = GmailApp.getUserLabelByName(LABEL);
   if (!label) {
-    throw new Error('Label "' + LABEL + '" bestaat niet in dit account.');
+    throw new Error('Label "' + LABEL + '" bestaat niet. Draai installeer().');
   }
   maakLabel_(LABEL_KLAAR);
   var klaarLabel = GmailApp.getUserLabelByName(LABEL_KLAAR);
@@ -104,37 +143,26 @@ function stuurInzending_(bericht) {
   var messageId = bericht.getId();
   var bijlagen = uploadBijlagen_(bericht, messageId);
 
-  var payload = {
+  roepNetlify_('/api/intake', {
     message_id: messageId,
     from: bericht.getFrom(),
     reply_to: bericht.getReplyTo() || bericht.getFrom(),
     subject: bericht.getSubject() || '',
     body: bericht.getPlainBody() || '',
     attachments: bijlagen
-  };
-
-  var res = UrlFetchApp.fetch(eig_('INTAKE_URL'), {
-    method: 'post',
-    contentType: 'application/json',
-    headers: { 'x-intake-secret': eig_('INTAKE_SECRET') },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
   });
-
-  if (res.getResponseCode() >= 300) {
-    throw new Error('intake gaf ' + res.getResponseCode() + ': ' + res.getContentText());
-  }
 
   pookWorker_();
 }
 
 /**
- * Bijlagen gaan rechtstreeks naar Storage; de function krijgt alleen paden.
- * Dit is geen optimalisatie maar een randvoorwaarde (§3).
+ * Bijlagen gaan rechtstreeks naar Storage, niet door de intake-function heen.
+ * Dit is geen optimalisatie maar een randvoorwaarde (§3): Netlify accepteert
+ * ongeveer 6 MB request body en een foto van 4 MB wordt base64 ruim 5.
  *
- * Pad: <OWNER_ID>/<messageId>-<n>.<ext> — de eerste map moet de owner-uuid
- * zijn, anders laat de RLS-policy op storage.objects de frontend het bestand
- * niet lezen.
+ * De brug levert een eenmalige upload-URL; die bevat zelf het token, dus hier
+ * is geen sleutel nodig. De brug bepaalt ook het pad, want de eerste map moet
+ * de owner-uuid zijn — daar matcht de RLS-policy op storage.objects op.
  */
 function uploadBijlagen_(bericht, messageId) {
   var bijlagen = bericht.getAttachments({
@@ -153,27 +181,19 @@ function uploadBijlagen_(bericht, messageId) {
       throw new Error('Bijlage ' + bijlage.getName() + ' is groter dan 20 MB.');
     }
 
-    var extensie = bestandsextensie_(bijlage.getName(), mime);
-    var pad = eig_('OWNER_ID') + '/' + messageId + '-' + i + extensie;
+    var antwoord = roepNetlify_('/api/bridge', {
+      actie: 'upload-url',
+      message_id: messageId,
+      index: i,
+      extensie: bestandsextensie_(bijlage.getName(), mime)
+    });
 
-    var res = UrlFetchApp.fetch(
-      eig_('SUPABASE_URL') + '/storage/v1/object/recipe-images/' + encodeURI(pad),
-      {
-        method: 'post',
-        contentType: mime,
-        headers: {
-          // Beide headers, net als elke andere aanroep hier en net als de
-          // officiële client doet. De nieuwe sleutels (sb_secret_…) worden op
-          // de `apikey`-header herkend; alleen een Bearer meesturen werkte
-          // met de oude JWT-sleutels en is nu een stille faalkans.
-          apikey: eig_('SUPABASE_SERVICE_KEY'),
-          Authorization: 'Bearer ' + eig_('SUPABASE_SERVICE_KEY'),
-          'x-upsert': 'true'
-        },
-        payload: bijlage.copyBlob().getBytes(),
-        muteHttpExceptions: true
-      }
-    );
+    var res = UrlFetchApp.fetch(antwoord.signedUrl, {
+      method: 'put',
+      contentType: mime,
+      payload: bijlage.copyBlob().getBytes(),
+      muteHttpExceptions: true
+    });
 
     if (res.getResponseCode() >= 300) {
       throw new Error(
@@ -182,7 +202,7 @@ function uploadBijlagen_(bericht, messageId) {
       );
     }
 
-    resultaat.push({ path: pad, mime: mime, name: bijlage.getName() });
+    resultaat.push({ path: antwoord.path, mime: mime, name: bijlage.getName() });
   }
 
   return resultaat;
@@ -202,7 +222,7 @@ function bestandsextensie_(naam, mime) {
  * daarna tot 15 minuten door. Deze aanroep blokkeert de trigger dus niet.
  */
 function pookWorker_() {
-  var res = UrlFetchApp.fetch(eig_('WORKER_URL'), {
+  var res = UrlFetchApp.fetch(siteUrl_() + WORKER_PAD, {
     method: 'post',
     headers: { 'x-intake-secret': eig_('INTAKE_SECRET') },
     payload: '',
@@ -210,35 +230,6 @@ function pookWorker_() {
   });
   if (res.getResponseCode() >= 400) {
     console.error('worker gaf ' + res.getResponseCode() + ': ' + res.getContentText());
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 3: Supabase wakker houden
-// ---------------------------------------------------------------------------
-
-/**
- * Eén goedkope select telt als API-activiteit en houdt het gratis project uit
- * de pauze (§9). Verifieer dit na acht dagen stilte in plaats van erop te
- * vertrouwen; pauzeert het project tóch, dan is een GitHub Actions-cron de
- * terugvaloptie.
- */
-function houdSupabaseWakker_() {
-  var res = UrlFetchApp.fetch(
-    eig_('SUPABASE_URL') + '/rest/v1/recipes?select=id&limit=1',
-    {
-      method: 'get',
-      headers: {
-        apikey: eig_('SUPABASE_SERVICE_KEY'),
-        Authorization: 'Bearer ' + eig_('SUPABASE_SERVICE_KEY')
-      },
-      muteHttpExceptions: true
-    }
-  );
-  if (res.getResponseCode() >= 300) {
-    throw new Error(
-      'keep-alive gaf ' + res.getResponseCode() + ': ' + res.getContentText()
-    );
   }
 }
 
@@ -253,48 +244,27 @@ function houdSupabaseWakker_() {
  * Gmail is hier zowel de ingang als de uitgang: geen mailservice nodig.
  */
 function stuurBevestigingen_() {
-  var res = UrlFetchApp.fetch(
-    eig_('SUPABASE_URL') +
-      '/rest/v1/intake_queue' +
-      '?select=id,status,error,result,payload,message_id' +
-      '&notified_at=is.null&status=in.(done,failed)&limit=20',
-    {
-      method: 'get',
-      headers: {
-        apikey: eig_('SUPABASE_SERVICE_KEY'),
-        Authorization: 'Bearer ' + eig_('SUPABASE_SERVICE_KEY')
-      },
-      muteHttpExceptions: true
-    }
-  );
-
-  if (res.getResponseCode() >= 300) {
-    throw new Error(
-      'queue lezen gaf ' + res.getResponseCode() + ': ' + res.getContentText()
-    );
-  }
-
-  var rijen = JSON.parse(res.getContentText());
+  var antwoord = roepNetlify_('/api/bridge', { actie: 'te-melden' });
+  var rijen = antwoord.rijen || [];
+  var gemeld = [];
 
   for (var i = 0; i < rijen.length; i++) {
-    var rij = rijen[i];
     try {
-      beantwoord_(rij);
-      markeerGemeld_(rij.id);
+      beantwoord_(rijen[i]);
+      gemeld.push(rijen[i].id);
     } catch (e) {
-      console.error('Bevestiging voor ' + rij.id + ' mislukt: ' + e.message);
+      console.error('Bevestiging voor ' + rijen[i].id + ' mislukt: ' + e.message);
     }
+  }
+
+  if (gemeld.length > 0) {
+    roepNetlify_('/api/bridge', { actie: 'gemeld', ids: gemeld });
   }
 }
 
 function beantwoord_(rij) {
   var payload = rij.payload || {};
   var ontvanger = payload.reply_to || payload.from;
-  if (!ontvanger) {
-    // Geen afzender om op te antwoorden (bijvoorbeeld een testinzending):
-    // wel als gemeld markeren, anders blijft hij elke minuut terugkomen.
-    return;
-  }
 
   var onderwerp, tekst;
 
@@ -323,35 +293,16 @@ function beantwoord_(rij) {
 
   if (origineel) {
     origineel.reply(tekst);
-  } else {
+  } else if (ontvanger) {
     GmailApp.sendEmail(ontvanger, onderwerp, tekst);
   }
-}
-
-function markeerGemeld_(id) {
-  var res = UrlFetchApp.fetch(
-    eig_('SUPABASE_URL') + '/rest/v1/intake_queue?id=eq.' + id,
-    {
-      method: 'patch',
-      contentType: 'application/json',
-      headers: {
-        apikey: eig_('SUPABASE_SERVICE_KEY'),
-        Authorization: 'Bearer ' + eig_('SUPABASE_SERVICE_KEY'),
-        Prefer: 'return=minimal'
-      },
-      payload: JSON.stringify({ notified_at: new Date().toISOString() }),
-      muteHttpExceptions: true
-    }
-  );
-  if (res.getResponseCode() >= 300) {
-    throw new Error(
-      'notified_at zetten gaf ' + res.getResponseCode() + ': ' + res.getContentText()
-    );
-  }
+  // Geen afzender om op te antwoorden (bijvoorbeeld een testinzending): niets
+  // sturen, maar de rij wél als gemeld markeren, anders komt hij elke minuut
+  // terug.
 }
 
 // ---------------------------------------------------------------------------
-// Eenmalige installatie
+// Eenmalige installatie en diagnose
 // ---------------------------------------------------------------------------
 
 /** Draai dit één keer met de hand: maakt labels en beide triggers aan. */
@@ -391,4 +342,31 @@ function maakLabel_(naam) {
         'andere naam bovenin dit bestand.'
     );
   }
+}
+
+/** Draai dit als er iets niet werkt: toetst beide instellingen en de brug. */
+function controleerInstellingen() {
+  var props = PropertiesService.getScriptProperties();
+
+  var namen = ['SITE_URL', 'INTAKE_SECRET'];
+  for (var i = 0; i < namen.length; i++) {
+    var waarde = props.getProperty(namen[i]);
+    if (!waarde) {
+      console.log(namen[i] + ': ONTBREEKT');
+      continue;
+    }
+    var geheim = namen[i].indexOf('SECRET') >= 0;
+    console.log(
+      namen[i] + ': ' +
+        (geheim ? waarde.substring(0, 6) + '… (' + waarde.length + ' tekens)' : waarde) +
+        (waarde !== waarde.trim() ? '  ⚠️ WITRUIMTE AAN BEGIN OF EIND' : '')
+    );
+  }
+
+  var antwoord = roepNetlify_('/api/bridge', { actie: 'keep-alive' });
+  console.log('Brug antwoordde: ' + JSON.stringify(antwoord));
+  console.log('Labels: ' +
+    (GmailApp.getUserLabelByName(LABEL) ? 'ok' : 'ONTBREEKT') + ' / ' +
+    (GmailApp.getUserLabelByName(LABEL_KLAAR) ? 'ok' : 'ONTBREEKT'));
+  console.log('Triggers: ' + ScriptApp.getProjectTriggers().length);
 }

@@ -4,7 +4,8 @@
  * Bouw dit in week één, niet "als het draait". Twintig regels, nul kosten, en
  * het beschermt precies datgene waarvoor je dit bouwt: de verzameling zelf.
  *
- * De trigger wordt aangemaakt door installeer() in Code.gs.
+ * De trigger wordt aangemaakt door installeer() in Code.gs. De recepten komen
+ * via /api/bridge binnen; er staat ook hier geen Supabase-sleutel.
  */
 
 var BACKUP_MAP = 'Receptenbak backups';
@@ -29,38 +30,21 @@ function backupNaarDrive() {
   console.log(bestandsnaam + ': ' + recepten.length + ' recepten weggeschreven.');
 }
 
-/** Paginerend ophalen; ook bij duizend recepten blijft dit één API-call per 1000. */
+/** Paginerend ophalen; ook bij duizend recepten blijft dit één call per 1000. */
 function haalAlleRecepten_() {
   var alles = [];
   var offset = 0;
-  var pagina = 1000;
 
   while (true) {
-    var res = UrlFetchApp.fetch(
-      eig_('SUPABASE_URL') +
-        '/rest/v1/recipes?select=*&order=created_at.asc' +
-        '&offset=' + offset + '&limit=' + pagina,
-      {
-        method: 'get',
-        headers: {
-          apikey: eig_('SUPABASE_SERVICE_KEY'),
-          Authorization: 'Bearer ' + eig_('SUPABASE_SERVICE_KEY')
-        },
-        muteHttpExceptions: true
-      }
-    );
+    var antwoord = roepNetlify_('/api/bridge', {
+      actie: 'export',
+      offset: offset,
+      limit: 1000
+    });
 
-    if (res.getResponseCode() >= 300) {
-      throw new Error(
-        'backup: recipes lezen gaf ' + res.getResponseCode() + ': ' +
-          res.getContentText()
-      );
-    }
-
-    var rijen = JSON.parse(res.getContentText());
-    alles = alles.concat(rijen);
-    if (rijen.length < pagina) break;
-    offset += pagina;
+    alles = alles.concat(antwoord.recepten || []);
+    if (!antwoord.meer) break;
+    offset += 1000;
   }
 
   return alles;
@@ -84,54 +68,4 @@ function ruimOudeOp_(map) {
   for (var i = BEWAAR_AANTAL; i < bestanden.length; i++) {
     bestanden[i].setTrashed(true);
   }
-}
-
-/**
- * Diagnose bij een 401 of 404: draai deze functie met de hand en lees het
- * uitvoeringslogboek. Hij laat zien wat er in de Script Properties staat
- * zonder de sleutel zelf te tonen — lengte, prefix en of er witruimte
- * omheen zit is genoeg om de meeste plakfouten te vinden.
- */
-function controleerInstellingen() {
-  var props = PropertiesService.getScriptProperties();
-  var namen = [
-    'SUPABASE_URL',
-    'SUPABASE_SERVICE_KEY',
-    'INTAKE_URL',
-    'WORKER_URL',
-    'INTAKE_SECRET',
-    'OWNER_ID'
-  ];
-
-  for (var i = 0; i < namen.length; i++) {
-    var naam = namen[i];
-    var waarde = props.getProperty(naam);
-
-    if (!waarde) {
-      console.log(naam + ': ONTBREEKT');
-      continue;
-    }
-
-    var geheim = naam.indexOf('KEY') >= 0 || naam.indexOf('SECRET') >= 0;
-    console.log(
-      naam + ': ' +
-        (geheim ? waarde.substring(0, 12) + '… (' + waarde.length + ' tekens)' : waarde) +
-        (waarde !== waarde.trim() ? '  ⚠️ WITRUIMTE AAN BEGIN OF EIND' : '') +
-        (waarde.indexOf('\n') >= 0 ? '  ⚠️ BEVAT EEN REGELEINDE' : '')
-    );
-  }
-
-  // Toetst URL en sleutel in één keer, met het volledige antwoord erbij.
-  var res = UrlFetchApp.fetch(
-    props.getProperty('SUPABASE_URL') + '/rest/v1/recipes?select=id&limit=1',
-    {
-      method: 'get',
-      headers: {
-        apikey: props.getProperty('SUPABASE_SERVICE_KEY'),
-        Authorization: 'Bearer ' + props.getProperty('SUPABASE_SERVICE_KEY')
-      },
-      muteHttpExceptions: true
-    }
-  );
-  console.log('Supabase antwoordde ' + res.getResponseCode() + ': ' + res.getContentText());
 }

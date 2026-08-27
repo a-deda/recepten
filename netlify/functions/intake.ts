@@ -1,6 +1,6 @@
-import { timingSafeEqual } from 'node:crypto';
 import type { Config } from '@netlify/functions';
-import { db, vereist } from './_lib/supabase.js';
+import { db } from './_lib/supabase.js';
+import { geheimKlopt, json } from './_lib/auth.js';
 import { inzendingSchema } from './_lib/types.js';
 
 /**
@@ -54,23 +54,6 @@ export default async function intake(request: Request): Promise<Response> {
   }
 
   return json({ id: data.id, duplicate: false });
-}
-
-function geheimKlopt(meegestuurd: string | null): boolean {
-  if (!meegestuurd) return false;
-  const verwacht = Buffer.from(vereist('INTAKE_SECRET'));
-  const gekregen = Buffer.from(meegestuurd);
-  // Lengte eerst: timingSafeEqual gooit bij ongelijke lengte.
-  return (
-    verwacht.length === gekregen.length && timingSafeEqual(verwacht, gekregen)
-  );
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'content-type': 'application/json' },
-  });
 }
 
 export const config: Config = { path: '/api/intake' };

@@ -110,16 +110,19 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
    Dat bestand somt vier rechten op: Gmail lezen en labelen, Drive voor de
    backup, uitgaande netwerkverzoeken, en triggers beheren. Pas je het later
    aan, dan vraagt Google opnieuw om toestemming.
-4. **Projectinstellingen → Scripteigenschappen**, zet:
+4. **Projectinstellingen → Scripteigenschappen**, zet er precies twee:
 
    | Naam | Waarde |
    |---|---|
-   | `SUPABASE_URL` | uit stap 1 |
-   | `SUPABASE_SERVICE_KEY` | de **secret** key uit stap 1 (zelfde waarde als `SUPABASE_SERVICE_ROLE_KEY` in Netlify) |
-   | `INTAKE_URL` | `https://<jouw-site>/api/intake` |
-   | `WORKER_URL` | `https://<jouw-site>/.netlify/functions/worker-background` |
+   | `SITE_URL` | `https://<jouw-site>.netlify.app`, zonder slash aan het eind |
    | `INTAKE_SECRET` | uit stap 3 |
-   | `OWNER_ID` | de user-uuid uit stap 1 |
+
+   > **Hier hoort geen Supabase-sleutel.** Supabase weigert secret keys bij
+   > verzoeken die op een browser lijken ("Forbidden use of secret API key in
+   > browser"), en de User-Agent van Apps Script valt daaronder — een header
+   > die je daar niet mag overschrijven. Alle databasetoegang loopt via
+   > `/api/bridge` op Netlify, waar de sleutel wél hoort. Dat is meteen de
+   > veiligere kant op: dit script kan niets zonder het gedeelde geheim.
 
 5. Ga terug naar de **Editor** (het `< >`-icoon in de linker zijbalk) — de
    uitvoerbalk bestaat niet in Projectinstellingen. Klik op **`Code.gs`**, sla
@@ -202,18 +205,18 @@ gratis terugvaloptie.
 
 ## Als er iets stukgaat
 
-Zit je vast op een `401` of `404` vanuit Apps Script? Draai daar de functie
-**`controleerInstellingen`** (staat in `Backup.gs`). Die drukt per Script
-Property af hoe lang de waarde is, welke prefix hij heeft en of er witruimte
-of een regeleinde in geslopen is — zonder je sleutel te tonen — en doet daarna
-één testaanroep met het volledige antwoord van Supabase erbij.
+Zit je vast in Apps Script? Draai daar de functie
+**`controleerInstellingen`** (in `Code.gs`). Die toont beide instellingen —
+zonder het geheim zelf — en toetst daarna in één keer de brug, de labels en de
+triggers.
 
 | Verschijnsel | Kijk hier |
 |---|---|
 | Geen bevestigingsmail | Apps Script → **Uitvoeringen**; de poller gooit een fout bij problemen |
 | Mail komt niet binnen | Staat het Gmail-filter goed? Heeft de mail het label `Receptenbak/nieuw`? |
 | `401` op de intake | `INTAKE_SECRET` verschilt tussen Netlify en Script Properties |
-| `401` van Supabase in Apps Script | Draai `controleerInstellingen`. Meestal een half gekopieerde sleutel, witruimte, of een sleutel uit een ánder project dan de URL |
+| `401` van de brug | `INTAKE_SECRET` verschilt tussen Netlify en Script Properties |
+| "Forbidden use of secret API key in browser" | Er staat nog een Supabase-sleutel in Apps Script van een oudere opzet. Verwijder die Script Properties; alleen `SITE_URL` en `INTAKE_SECRET` horen er te staan |
 | Recept blijft `pending` | Wordt de worker gepookt? Zie de background-functions-check in stap 4 |
 | "Mislukt: pagina gaf status 403" | Cookiemuur of Cloudflare. Kopieer de tekst en mail die |
 | Instagram-link faalt | Verwacht: loginmuur. Kopieer de caption en mail die |
