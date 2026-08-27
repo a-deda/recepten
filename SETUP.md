@@ -76,6 +76,13 @@ Dat is `INTAKE_SECRET`. Apps Script en de intake-endpoint delen hem.
 4. Zet die URL ook in Supabase onder **Authentication → URL Configuration →
    Site URL**, anders werkt de magic link niet.
 
+> **Windows-gebruikers:** de curl-commando's hieronder staan in bash-vorm.
+> In `cmd.exe` werken enkele aanhalingstekens niet — gebruik dubbele quotes en
+> escape de quotes binnen de JSON:
+> `curl -X POST %URL% -H "content-type: application/json" -d "{\"actie\":\"keep-alive\"}"`.
+> Krijg je "Body is geen geldige JSON" terug, dan is dát het probleem en niet
+> je opzet — die melding komt pas ná de geheimcontrole, dus je secret klopte al.
+
 **Controleer meteen of background functions op jouw plan draaien.** Roep aan:
 
 ```bash
