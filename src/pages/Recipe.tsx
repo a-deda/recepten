@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 
 import { useAfbeelding, useRecept } from '../lib/queries';
+import { vertaaldUit } from '../lib/talen';
 
 function hoeveelheid(qty: string | null, unit: string | null): string {
   return [qty, unit].filter(Boolean).join(' ');
@@ -16,6 +17,7 @@ export function Recipe() {
   if (error || !recept) return <p className="fout">Recept niet gevonden.</p>;
 
   const kanKoken = recept.steps.length > 0;
+  const bron_taal = vertaaldUit(recept.language);
 
   return (
     <main className="scherm detail">
@@ -112,6 +114,9 @@ export function Recipe() {
           </p>
         )}
         {!recept.source_book && !recept.source_url && <p>Losse inzending.</p>}
+        {bron_taal && (
+          <p className="detail__parse-notitie">Vertaald uit {bron_taal}.</p>
+        )}
         {recept.parse_notes && (
           <p className="detail__parse-notitie">Claude twijfelde over: {recept.parse_notes}</p>
         )}

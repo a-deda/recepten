@@ -62,6 +62,13 @@ zonder de reden te lezen die erbij staat:
   balk doet omdraaien (`src/lib/kookklok.ts`).
 - **`raw_input` wordt altijd bewaard.** Met een betere prompt kun je herparsen
   zonder de bron opnieuw te zoeken.
+- **De parser vertaalt naar het Nederlands, maar rekent niets om.** Een
+  Amerikaanse cup is geen Nederlandse kop en 350 °F is geen 180 °C; dat
+  omrekenen is een aparte bewerking met eigen fouten. Niet-metrische maten
+  blijven staan en worden in `parse_notes` gemeld.
+- **`language` bevat de taal van de bron, niet van de opgeslagen tekst.** Die
+  is altijd Nederlands. Zo blijft zichtbaar dát er vertaald is, wat uitmaakt
+  als een formulering raar leest.
 - **Gefaalde inzendingen worden nooit opgeruimd.** Ze zijn het materiaal voor
   die herparse.
 - **In Apps Script staat geen Supabase-sleutel.** Supabase weigert secret keys

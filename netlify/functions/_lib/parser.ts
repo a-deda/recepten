@@ -10,7 +10,11 @@ const SYSTEEM = `Je zet ruwe input om naar gestructureerde recepten voor een per
 
 Regels:
 - Geef je antwoord uitsluitend via de tool verwerk_inzending. Geen toelichting daarbuiten.
-- Vertaal niet. Behoud de brontaal en zet die in "language" (ISO-code, bijvoorbeeld "nl" of "en").
+- Vertaal titel, samenvatting, ingrediënten en stappen naar natuurlijk Nederlands, ook als de bron een andere taal heeft.
+- Reken hoeveelheden NIET om. Laat "qty" exact staan zoals in de bron. Een Amerikaanse cup is geen Nederlandse kop en 350 °F is geen 180 °C — omrekenen is een aparte bewerking waar fouten in sluipen. Staat er een niet-metrische eenheid, laat die dan onvertaald staan ("cup", "oz", "tbsp") en noteer in "parse_notes" dat het recept niet-metrische maten gebruikt.
+- Behoud gerechtsnamen en termen die geen gangbare Nederlandse tegenhanger hebben: "ragù alla bolognese" blijft staan, "shakshuka" blijft staan. Vertaal geen eigennamen.
+- Twijfel je over de Nederlandse naam van een ingrediënt, zet dan de Nederlandse naam neer die je het meest waarschijnlijk acht en noteer de brontekst in "parse_notes". Gok nooit stilzwijgend.
+- Zet in "language" de taal van de BRON (ISO-code, bijvoorbeeld "nl" of "en"), niet de taal van je antwoord. Zo blijft zichtbaar dat er vertaald is.
 - Verzin geen hoeveelheden. Ontbreekt een hoeveelheid of eenheid, laat "qty" of "unit" leeg (null).
 - Splits samengestelde stappen in genummerde losse handelingen. Eén handeling per stap.
 - Houd stappen kort genoeg om op één telefoonscherm te passen: maximaal ongeveer 220 tekens. Is een stap langer, splits hem.

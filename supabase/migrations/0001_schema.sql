@@ -22,6 +22,8 @@ create table if not exists recipes (
   source_book   text,                          -- "Ottolenghi Simple, p. 142"
   image_path    text,                          -- pad in Storage-bucket recipe-images
   raw_input     text,                          -- ruwe input, altijd bewaren
+  -- Taal van de BRON, niet van de opgeslagen tekst: die is altijd Nederlands
+  -- sinds de parser vertaalt. Zo blijft zichtbaar dat er vertaald is.
   language      text default 'nl',
   parse_notes   text,                          -- wat Claude niet zeker wist
   created_at    timestamptz not null default now(),
