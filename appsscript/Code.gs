@@ -61,11 +61,14 @@ function roepNetlify_(pad, payload) {
     muteHttpExceptions: true
   };
 
-  var res = UrlFetchApp.fetch(siteUrl_() + pad, opties);
+  var url = siteUrl_() + pad;
+  var res = UrlFetchApp.fetch(url, opties);
   var code = res.getResponseCode();
 
   if (code >= 300) {
-    throw new Error(pad + ' gaf ' + code + ': ' + res.getContentText());
+    // De volledige URL erbij: bij een 404 is de vraag bijna altijd "welk adres
+    // heeft hij dan opgevraagd", en dat kun je niet raden uit het pad alleen.
+    throw new Error(url + ' gaf ' + code + ': ' + res.getContentText());
   }
 
   var tekst = res.getContentText();
@@ -363,6 +366,7 @@ function controleerInstellingen() {
     );
   }
 
+  console.log('Roept aan: ' + siteUrl_() + '/api/bridge');
   var antwoord = roepNetlify_('/api/bridge', { actie: 'keep-alive' });
   console.log('Brug antwoordde: ' + JSON.stringify(antwoord));
   console.log('Labels: ' +
