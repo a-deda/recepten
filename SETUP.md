@@ -122,6 +122,11 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
    | Naam | Waarde |
    |---|---|
    | `SITE_URL` | `https://<jouw-site>.netlify.app`, zonder slash aan het eind |
+
+   > Neem het adres van de **site zelf**, niet uit de adresbalk van het
+   > Netlify-dashboard. `https://app.netlify.com/sites/...` levert een
+   > `404 {"error":"requested path is invalid"}` op — het verzoek komt dan wel
+   > bij Netlify aan, maar op een domein waar `/api/bridge` niets betekent.
    | `INTAKE_SECRET` | uit stap 3 |
 
    > **Hier hoort geen Supabase-sleutel.** Supabase weigert secret keys bij
