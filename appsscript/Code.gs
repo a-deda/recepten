@@ -6,7 +6,7 @@
  * eigen inbox, ook al is het je eigen script.
  *
  * Eén trigger, elke minuut, vier taken per run:
- *   1. ongelezen mail met label `inbox` ophalen
+ *   1. ongelezen mail met het label Receptenbak/nieuw ophalen
  *   2. bijlagen rechtstreeks naar Supabase Storage (niet door de function heen:
  *      Netlify accepteert ~6 MB en een iPhone-foto van 4 MB wordt base64 ruim 5)
  *   3. Supabase wakker houden met één goedkope select
@@ -16,8 +16,12 @@
  * geen geheim in deze code.
  */
 
-var LABEL = 'inbox';
-var LABEL_KLAAR = 'verwerkt';
+// Genest onder één ouderlabel, zodat het in de Gmail-zijbalk bij elkaar staat.
+// Let op: 'inbox' kan hier NIET staan. Gmail reserveert INBOX, SENT, DRAFT,
+// SPAM, TRASH, STARRED, IMPORTANT, UNREAD en CHAT als systeemlabels, en
+// weigert een gebruikerslabel met die naam met "Invalid label name".
+var LABEL = 'Receptenbak/nieuw';
+var LABEL_KLAAR = 'Receptenbak/verwerkt';
 var MAX_THREADS_PER_RUN = 10;
 var MAX_BIJLAGE_BYTES = 20 * 1024 * 1024;
 
@@ -66,8 +70,8 @@ function verwerkNieuweMail_() {
   if (!label) {
     throw new Error('Label "' + LABEL + '" bestaat niet in dit account.');
   }
-  var klaarLabel = GmailApp.getUserLabelByName(LABEL_KLAAR) ||
-    GmailApp.createLabel(LABEL_KLAAR);
+  maakLabel_(LABEL_KLAAR);
+  var klaarLabel = GmailApp.getUserLabelByName(LABEL_KLAAR);
 
   var threads = label.getThreads(0, MAX_THREADS_PER_RUN);
 
@@ -346,8 +350,8 @@ function markeerGemeld_(id) {
 
 /** Draai dit één keer met de hand: maakt labels en beide triggers aan. */
 function installeer() {
-  if (!GmailApp.getUserLabelByName(LABEL)) GmailApp.createLabel(LABEL);
-  if (!GmailApp.getUserLabelByName(LABEL_KLAAR)) GmailApp.createLabel(LABEL_KLAAR);
+  maakLabel_(LABEL);
+  maakLabel_(LABEL_KLAAR);
 
   var bestaand = ScriptApp.getProjectTriggers();
   for (var i = 0; i < bestaand.length; i++) {
@@ -357,5 +361,28 @@ function installeer() {
   ScriptApp.newTrigger('pollen').timeBased().everyMinutes(1).create();
   ScriptApp.newTrigger('backupNaarDrive').timeBased().onWeekDay(ScriptApp.WeekDay.SUNDAY).atHour(4).create();
 
-  console.log('Klaar. Labels en triggers staan.');
+  console.log(
+    'Klaar. Labels "' + LABEL + '" en "' + LABEL_KLAAR + '" staan, ' +
+      'plus twee triggers (elke minuut pollen, zondag 4 uur backuppen).'
+  );
+}
+
+/**
+ * Maakt een label als het nog niet bestaat, en zegt duidelijk wat er misging
+ * als Gmail het weigert — anders sta je met een kale "Invalid argument" en een
+ * regelnummer.
+ */
+function maakLabel_(naam) {
+  if (GmailApp.getUserLabelByName(naam)) return;
+
+  try {
+    GmailApp.createLabel(naam);
+  } catch (e) {
+    throw new Error(
+      'Label "' + naam + '" kon niet worden aangemaakt: ' + e.message +
+        '. Gmail weigert namen die botsen met een systeemlabel (inbox, sent, ' +
+        'draft, spam, trash, starred, important, unread, chat). Kies een ' +
+        'andere naam bovenin dit bestand.'
+    );
+  }
 }

@@ -130,12 +130,16 @@ Dat is de goedkoopste wrijvingsreductie in het hele project.
    niet geverifieerd"-waarschuwing, en via *Geavanceerd → Ga naar project* kom
    je verder. Het is je eigen script.
 
-   Dit maakt de labels `inbox` en `verwerkt` en zet twee triggers klaar: elke
-   minuut pollen, zondagnacht backuppen. Controleer daarna onder **Triggers**
+   Dit maakt de labels `Receptenbak/nieuw` en `Receptenbak/verwerkt` en zet
+   twee triggers klaar: elke minuut pollen, zondagnacht backuppen. Controleer daarna onder **Triggers**
    (het klok-icoon) dat er inderdaad twee staan.
 6. **Gmail → Instellingen → Filters** → nieuw filter: *Aan* bevat je
-   receptenadres → *Label toepassen: inbox*. Zonder dit label doet de poller
-   niets.
+   receptenadres → *Label toepassen: Receptenbak/nieuw*. Zonder dit label doet
+   de poller niets.
+
+   > De labels heten bewust niet `inbox`: Gmail houdt INBOX, SENT, DRAFT, SPAM,
+   > TRASH, STARRED, IMPORTANT, UNREAD en CHAT voor zichzelf en weigert een
+   > gebruikerslabel met zo'n naam.
 
 ## 7. Meet de parser vóór je hem vertrouwt
 
@@ -191,7 +195,7 @@ gratis terugvaloptie.
 | Verschijnsel | Kijk hier |
 |---|---|
 | Geen bevestigingsmail | Apps Script → **Uitvoeringen**; de poller gooit een fout bij problemen |
-| Mail komt niet binnen | Staat het Gmail-filter goed? Heeft de mail het label `inbox`? |
+| Mail komt niet binnen | Staat het Gmail-filter goed? Heeft de mail het label `Receptenbak/nieuw`? |
 | `401` op de intake | `INTAKE_SECRET` verschilt tussen Netlify en Script Properties |
 | Recept blijft `pending` | Wordt de worker gepookt? Zie de background-functions-check in stap 4 |
 | "Mislukt: pagina gaf status 403" | Cookiemuur of Cloudflare. Kopieer de tekst en mail die |
