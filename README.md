@@ -13,6 +13,7 @@ staat in de PRD; dit bestand beschrijft alleen wat er in de repo zit.
 | Onderdeel | Waar |
 |---|---|
 | Funnel (mail → Storage → queue → Claude → recept) | `appsscript/`, `netlify/functions/` |
+| Toevoegen in de app (link, tekst, foto's, pdf) | `src/pages/Add.tsx`, `netlify/functions/submit.ts` |
 | Brug: alle databasetoegang voor Apps Script | `netlify/functions/bridge.ts` |
 | Parser (één prompt, één schema, alle bronnen) | `netlify/functions/_lib/parser.ts` |
 | Datamodel, RLS, RPC's | `supabase/migrations/` |
@@ -71,6 +72,13 @@ zonder de reden te lezen die erbij staat:
   als een formulering raar leest.
 - **Gefaalde inzendingen worden nooit opgeruimd.** Ze zijn het materiaal voor
   die herparse.
+- **De app-ingang werkt op je inlogsessie, niet op het gedeelde geheim.** Dat
+  hoort niet in een browserbundel. `/api/submit` verifieert je Supabase-token
+  en accepteert alleen de eigenaar; daarna komt een inzending in dezelfde
+  queue en door dezelfde parser als een mail. Eén pijplijn, twee ingangen.
+- **Foto's worden in de browser verkleind vóór het uploaden.** Een
+  telefoonfoto is zo 4 MB en Claude weigert boven de 5; zonder die stap zou je
+  wachten op een mislukking.
 - **In Apps Script staat geen Supabase-sleutel.** Supabase weigert secret keys
   bij verzoeken die op een browser lijken, en de User-Agent van Apps Script
   valt daaronder. Alles loopt via `/api/bridge`; bijlagen gaan met een signed

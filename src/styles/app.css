@@ -283,3 +283,50 @@
 }
 
 .scherm__acties { display: flex; gap: var(--ruimte-2); }
+
+/* --- Toevoegen ------------------------------------------------------------ */
+.formulier input[type='file'] {
+  padding: var(--ruimte-3);
+  background: var(--kleur-vlak);
+  border: 1px dashed var(--kleur-lijn);
+  border-radius: var(--radius-m);
+}
+
+.bestandenlijst {
+  margin-top: var(--ruimte-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ruimte-1);
+}
+
+.bestandenlijst li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ruimte-2);
+  padding: var(--ruimte-2) var(--ruimte-3);
+  background: var(--kleur-vlak);
+  border-radius: var(--radius-s);
+  font-size: var(--tekst-s);
+}
+
+/* Bestandsnamen zijn lang; laat ze afbreken in plaats van de rij te rekken. */
+.bestandenlijst li span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uitkomst {
+  margin: var(--ruimte-5) 0 var(--ruimte-2);
+  font-size: var(--tekst-l);
+}
+
+.uitkomst--goed { color: var(--tekst); }
+.uitkomst--fout { color: var(--kleur-fout); }
+
+.uitkomst__uitleg {
+  margin-bottom: var(--ruimte-4);
+  color: var(--tekst-gedempt);
+  font-size: var(--tekst-s);
+}

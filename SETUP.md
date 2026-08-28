@@ -12,7 +12,8 @@ heeft.
 
 1. Maak op [supabase.com](https://supabase.com) een gratis project.
 2. **SQL Editor** → draai de bestanden uit `supabase/migrations/` op volgorde:
-   `0001_schema.sql`, `0002_rls.sql`, `0003_storage.sql`, `0004_functions.sql`.
+   `0001_schema.sql`, `0002_rls.sql`, `0003_storage.sql`, `0004_functions.sql`,
+   `0005_storage_upload.sql`.
 3. **Authentication → Providers → Email**: zet *Confirm email* aan en
    *Enable email provider* aan. Magic link werkt dan zonder wachtwoord.
 4. **Authentication → Users → Add user**: je eigen e-mailadres. Noteer de

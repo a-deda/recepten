@@ -26,7 +26,7 @@ export function Library() {
               Op beginscherm
             </button>
           )}
-          <Link to="/nieuw" className="knop knop--klein">
+          <Link to="/toevoegen" className="knop knop--klein">
             Toevoegen
           </Link>
         </div>
@@ -55,7 +55,7 @@ export function Library() {
       ) : (
         <p className="leeg">
           Nog niets in de bibliotheek. Mail een recept naar je receptenadres, of{' '}
-          <Link to="/nieuw">voeg er zelf een toe</Link>.
+          <Link to="/toevoegen">voeg er hier een toe</Link>.
         </p>
       )}
     </main>

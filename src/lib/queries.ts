@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase, BUCKET } from './supabase';
+import { bestandExtensie, verkleinIndienNodig } from './afbeelding';
 import {
   KAART_KOLOMMEN,
   VOLLEDIGE_KOLOMMEN,
@@ -155,6 +156,103 @@ export function useAfbeelding(pad: string | null | undefined) {
         .createSignedUrl(pad!, 3600);
       if (error) return null;
       return data.signedUrl;
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Toevoegen vanuit de app (naast de mailroute)
+// ---------------------------------------------------------------------------
+
+export interface InzendingStatus {
+  status: 'pending' | 'processing' | 'done' | 'failed';
+  error: string | null;
+  result: { titles?: string[] } | null;
+  recipe_id: string | null;
+}
+
+async function metSessie(): Promise<string> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('Je sessie is verlopen. Log opnieuw in.');
+  return token;
+}
+
+async function roepSubmit<T>(body: Record<string, unknown>): Promise<T> {
+  const res = await fetch('/api/submit', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${await metSessie()}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  const antwoord = await res.json();
+  if (!res.ok) throw new Error(antwoord.error ?? `Server gaf ${res.status}`);
+  return antwoord as T;
+}
+
+/**
+ * Bestanden gaan rechtstreeks van de browser naar Storage, niet door een
+ * function heen: die accepteert ~6 MB en een telefoonfoto komt daaroverheen.
+ * Daarna gaat alleen het pad mee naar /api/submit — dezelfde vorm als de
+ * mailroute gebruikt.
+ */
+export function useToevoegen() {
+  return useMutation({
+    mutationFn: async ({
+      tekst,
+      bestanden,
+    }: {
+      tekst: string;
+      bestanden: File[];
+    }): Promise<string> => {
+      const { data: sessie } = await supabase.auth.getUser();
+      const uid = sessie.user?.id;
+      if (!uid) throw new Error('Je sessie is verlopen. Log opnieuw in.');
+
+      const attachments = [];
+      for (const ruw of bestanden) {
+        const bestand = await verkleinIndienNodig(ruw);
+        const pad = `${uid}/${crypto.randomUUID()}${bestandExtensie(bestand)}`;
+
+        const { error } = await supabase.storage
+          .from(BUCKET)
+          .upload(pad, bestand, { contentType: bestand.type });
+        if (error) throw new Error(`Uploaden van ${ruw.name} mislukte: ${error.message}`);
+
+        attachments.push({ path: pad, mime: bestand.type, name: ruw.name });
+      }
+
+      const { id } = await roepSubmit<{ id: string }>({ tekst, attachments });
+      return id;
+    },
+  });
+}
+
+/**
+ * Polt tot de worker klaar is. In de app krijg je geen bevestigingsmail, dus
+ * de uitkomst — inclusief de reden bij een mislukking — moet hier op je scherm
+ * verschijnen.
+ */
+export function useInzendingStatus(id: string | null) {
+  const client = useQueryClient();
+
+  return useQuery({
+    queryKey: ['inzending', id],
+    enabled: Boolean(id),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === 'done' || status === 'failed' ? false : 2000;
+    },
+    queryFn: async (): Promise<InzendingStatus> => {
+      const antwoord = await roepSubmit<InzendingStatus>({ actie: 'status', id });
+      if (antwoord.status === 'done') {
+        void client.invalidateQueries({ queryKey: ['recepten'] });
+        void client.invalidateQueries({ queryKey: ['inbox-aantal'] });
+      }
+      return antwoord;
     },
   });
 }

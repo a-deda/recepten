@@ -8,6 +8,7 @@ import { Library } from './pages/Library';
 import { Inbox } from './pages/Inbox';
 import { Recipe } from './pages/Recipe';
 import { RecipeEdit } from './pages/RecipeEdit';
+import { Add } from './pages/Add';
 import { Cook } from './pages/Cook';
 
 export function App() {
@@ -38,6 +39,7 @@ export function App() {
     <Routes>
       <Route path="/" element={<Library />} />
       <Route path="/inbox" element={<Inbox />} />
+      <Route path="/toevoegen" element={<Add />} />
       <Route path="/nieuw" element={<RecipeEdit />} />
       <Route path="/r/:id" element={<Recipe />} />
       <Route path="/r/:id/bewerken" element={<RecipeEdit />} />
