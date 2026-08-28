@@ -12,9 +12,6 @@
 
 [functions]
   node_bundler = "esbuild"
-  # pdf-parse bundelt slecht: het sleept pdfjs met workerbestanden mee. Als
-  # extern pakket meesturen in plaats van inbundelen.
-  external_node_modules = ["pdf-parse"]
 
 # Paden:
 #   /api/intake                            -> netlify/functions/intake.ts (config.path)

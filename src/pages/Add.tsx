@@ -130,7 +130,8 @@ export function Add() {
         />
 
         <label htmlFor="bestanden">
-          Foto's of pdf <span className="hint">een kookboekpagina, een screenshot, een pdf</span>
+          Foto's of pdf{' '}
+          <span className="hint">een kookboekpagina, een screenshot, een pdf (ook gescand)</span>
         </label>
         <input
           id="bestanden"

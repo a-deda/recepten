@@ -107,6 +107,20 @@ const TOOL: Anthropic.Beta.BetaTool = {
 function bouwBericht(invoer: ParserInvoer): Anthropic.Beta.BetaMessageParam {
   const blokken: Anthropic.Beta.BetaContentBlockParam[] = [];
 
+  // Pdf's gaan als document naar Claude: hij leest ze zelf, met opmaak, en
+  // een scan zonder tekstlaag werkt daardoor net zo goed als een digitale pdf.
+  for (const document of invoer.documenten) {
+    blokken.push({
+      type: 'document',
+      title: document.naam,
+      source: {
+        type: 'base64',
+        media_type: 'application/pdf',
+        data: document.base64,
+      },
+    });
+  }
+
   for (const afbeelding of invoer.afbeeldingen) {
     blokken.push({
       type: 'image',
@@ -123,6 +137,9 @@ function bouwBericht(invoer: ParserInvoer): Anthropic.Beta.BetaMessageParam {
     invoer.sourceUrl ? `Bron-URL: ${invoer.sourceUrl}` : null,
     invoer.afbeeldingen.length > 0
       ? 'De foto hierboven is de bron; de tekst eronder is wat de afzender erbij schreef.'
+      : null,
+    invoer.documenten.length > 0
+      ? 'De pdf hierboven is de bron; de tekst eronder is wat de afzender erbij schreef.'
       : null,
     '',
     invoer.tekst || '(geen begeleidende tekst)',

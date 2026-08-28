@@ -76,6 +76,10 @@ zonder de reden te lezen die erbij staat:
   hoort niet in een browserbundel. `/api/submit` verifieert je Supabase-token
   en accepteert alleen de eigenaar; daarna komt een inzending in dezelfde
   queue en door dezelfde parser als een mail. Eén pijplijn, twee ingangen.
+- **Pdf's gaan onbewerkt naar Claude, zonder tekstextractie vooraf.** Dat
+  scheelt een bibliotheek die zich slecht laat bundelen (pdfjs verwacht
+  browserglobals als `DOMMatrix`) én het werkt beter: Claude ziet de opmaak, en
+  een gescande pdf zonder tekstlaag komt er net zo goed doorheen.
 - **Foto's worden in de browser verkleind vóór het uploaden.** Een
   telefoonfoto is zo 4 MB en Claude weigert boven de 5; zonder die stap zou je
   wachten op een mislukking.

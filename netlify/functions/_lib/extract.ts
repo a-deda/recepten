@@ -3,6 +3,11 @@ import type { Inzending, ParserInvoer, BronType } from './types.js';
 
 const FETCH_TIMEOUT_MS = 8000;
 const MAX_TEKST = 60_000;
+/**
+ * Claude accepteert een request van 32 MB en base64 maakt een bestand ruim een
+ * derde groter. 10 MB pdf is ruim genoeg voor een receptpagina en houdt marge.
+ */
+const MAX_PDF_BYTES = 10 * 1024 * 1024;
 /** Claude accepteert afbeeldingen tot 5 MB per stuk (base64 telt niet mee). */
 const MAX_AFBEELDING_BYTES = 5 * 1024 * 1024;
 
@@ -174,40 +179,47 @@ export async function extraheer(inzending: Inzending): Promise<ParserInvoer> {
         path: bijlage.path,
       });
     }
-    return { bron, tekst: bodyTekst, afbeeldingen, sourceUrl: null, rawInput };
+    return {
+      bron,
+      tekst: bodyTekst,
+      afbeeldingen,
+      documenten: [],
+      sourceUrl: null,
+      rawInput,
+    };
   }
 
   if (bron === 'pdf') {
-    const bijlage = inzending.attachments.find(
+    // Geen tekstextractie meer: Claude leest de pdf zelf. Dat scheelt niet
+    // alleen een bibliotheek die zich slecht laat bundelen (pdfjs verwacht
+    // browserglobals als DOMMatrix), het is ook beter — hij ziet de opmaak,
+    // en een gescande pdf zonder tekstlaag werkt nu ook.
+    const documenten = [];
+    for (const bijlage of inzending.attachments.filter(
       (a) => a.mime === 'application/pdf',
-    )!;
-    const bytes = await downloadUitStorage(bijlage.path);
-
-    // Bewust pas hier laden. pdf-parse trekt pdfjs met workerbestanden mee, en
-    // als dat in de bundel misgaat crasht de function bij het opstarten — dan
-    // verwerkt hij ook geen enkele URL of foto meer, terwijl de aanroep nog
-    // netjes 202 teruggeeft. Zo raakt een pdf-probleem alleen pdf's.
-    const { PDFParse } = await import('pdf-parse');
-    const parser = new PDFParse({ data: bytes });
-    try {
-      const resultaat = await parser.getText();
-      const tekst = resultaat.text.trim();
-      if (!tekst) {
+    )) {
+      const bytes = await downloadUitStorage(bijlage.path);
+      if (bytes.byteLength > MAX_PDF_BYTES) {
         throw new Error(
-          'Geen tekst in de pdf gevonden — waarschijnlijk een scan. ' +
-            'Stuur hem als foto, dan leest Claude hem als afbeelding.',
+          `Pdf ${bijlage.name || bijlage.path} is groter dan 10 MB. ` +
+            'Stuur alleen de pagina met het recept.',
         );
       }
-      return {
-        bron,
-        tekst: `${bodyTekst}\n\n${tekst}`.slice(0, MAX_TEKST),
-        afbeeldingen: [],
-        sourceUrl: null,
-        rawInput,
-      };
-    } finally {
-      await parser.destroy();
+      documenten.push({
+        base64: Buffer.from(bytes).toString('base64'),
+        path: bijlage.path,
+        naam: bijlage.name || 'recept.pdf',
+      });
     }
+
+    return {
+      bron,
+      tekst: bodyTekst,
+      afbeeldingen: [],
+      documenten,
+      sourceUrl: null,
+      rawInput,
+    };
   }
 
   if (bron === 'url') {
@@ -221,6 +233,7 @@ export async function extraheer(inzending: Inzending): Promise<ParserInvoer> {
       bron,
       tekst: tekst.slice(0, MAX_TEKST),
       afbeeldingen: [],
+      documenten: [],
       sourceUrl: url,
       rawInput,
     };
@@ -231,6 +244,7 @@ export async function extraheer(inzending: Inzending): Promise<ParserInvoer> {
     bron,
     tekst: bodyTekst.slice(0, MAX_TEKST),
     afbeeldingen: [],
+    documenten: [],
     sourceUrl: null,
     rawInput,
   };

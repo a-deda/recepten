@@ -74,6 +74,8 @@ export interface ParserInvoer {
   tekst: string;
   /** Afbeeldingen als base64, voor de vision-route. */
   afbeeldingen: Array<{ mediaType: string; base64: string; path: string }>;
+  /** Pdf's als base64. Claude leest die zelf, inclusief opmaak en scans. */
+  documenten: Array<{ base64: string; path: string; naam: string }>;
   sourceUrl: string | null;
   /** Precies wat er binnenkwam — gaat onbewerkt in raw_input. */
   rawInput: string;
