@@ -234,6 +234,7 @@ triggers.
 | "Mislukt: pagina gaf status 403" | Cookiemuur of Cloudflare. Kopieer de tekst en mail die |
 | Instagram-link faalt | Verwacht: loginmuur. Kopieer de caption en mail die |
 | Foto's laden niet in de app | Staat het Storage-pad onder `<OWNER_ID>/…`? De RLS-policy eist dat |
+| "new row violates row-level security policy" bij uploaden in de app | Migratie `0005_storage_upload.sql` is niet gedraaid |
 
 Gefaalde inzendingen blijven in `intake_queue` staan met status `failed` en de
 volledige payload. Als de prompt later beter is, kun je ze opnieuw draaien

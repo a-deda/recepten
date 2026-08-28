@@ -220,7 +220,19 @@ export function useToevoegen() {
         const { error } = await supabase.storage
           .from(BUCKET)
           .upload(pad, bestand, { contentType: bestand.type });
-        if (error) throw new Error(`Uploaden van ${ruw.name} mislukte: ${error.message}`);
+
+        if (error) {
+          // Een kale RLS-melding zegt niet wélke policy ontbreekt. Deze is in
+          // de praktijk altijd dezelfde: het insert-recht op je eigen map.
+          const rls = /row-level security|violates.*policy/i.test(error.message);
+          throw new Error(
+            rls
+              ? `Uploaden van ${ruw.name} mag niet. Draai migratie ` +
+                '0005_storage_upload.sql in de Supabase SQL Editor — die geeft ' +
+                'de app schrijfrecht op je eigen map in Storage.'
+              : `Uploaden van ${ruw.name} mislukte: ${error.message}`,
+          );
+        }
 
         attachments.push({ path: pad, mime: bestand.type, name: ruw.name });
       }
